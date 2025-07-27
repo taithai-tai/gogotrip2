@@ -1,0 +1,2392 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoGoTrip - แอปจองท่องเที่ยว</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Kanit', sans-serif;
+        }
+        .yellow-gradient {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .hotel-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .hotel-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        .icon-bounce {
+            transition: transform 0.2s ease;
+        }
+        .icon-bounce:hover {
+            transform: scale(1.1);
+        }
+        .bookmark-heart {
+            transition: all 0.3s ease;
+        }
+        .bookmark-heart.active {
+            color: #ef4444;
+            transform: scale(1.2);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .slide-up {
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-900">
+    <!-- Mobile App Container -->
+    <div class="max-w-md mx-auto bg-gray-800 min-h-screen">
+        <!-- Home Page -->
+        <div id="homePage" class="page-content">
+            <!-- Header with Yellow Gradient -->
+                <div class="yellow-gradient text-white p-6 rounded-b-3xl">
+                    <!-- Logo -->
+                <div class="flex justify-center mb-4">
+                    <img src="https://static.wixstatic.com/media/ad67c9_7e663ecc43324ca49f69d5ec28481082~mv2.png/v1/crop/x_0,y_232,w_800,h_294/fill/w_496,h_182,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/ad67c9_7e663ecc43324ca49f69d5ec28481082~mv2.png"
+                        alt="GoGoTrip Logo" class="h-16 object-contain">
+                </div>
+                        <!-- Search Bar and Chat Button -->
+                        <div class="flex gap-3 mb-4">
+                            <!-- Search Bar -->
+                            <div class="relative flex-1">
+                                <div class="absolute left-4 top-3.5">
+                                    <span class="text-white text-xl">🌍</span>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    placeholder="ค้นหาที่พัก สถานที่ท่องเที่ยว..." 
+                                    class="w-full py-3 px-4 pl-12 pr-16 rounded-2xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-white"
+                                    id="searchInput"
+                                    onkeypress="if(event.key==='Enter') performSearch()"
+                                >
+                                <button onclick="performSearch()" class="absolute right-2 top-2 bg-yellow-400 text-gray-900 rounded-xl px-3 py-1.5 text-sm font-semibold hover:bg-yellow-300 transition-colors">
+                                    ค้นหา
+                                </button>
+                            </div>
+                        
+                        <!-- Chat Button -->
+                        <button class="bg-white bg-opacity-20 backdrop-blur-sm rounded-2xl p-3 hover:bg-opacity-30 transition-all flex items-center justify-center" onclick="openChat()">
+                            <span class="text-white text-xl">💬</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Three Action Buttons -->
+                    <div class="grid grid-cols-3 gap-3">
+                        <button class="bg-white bg-opacity-20 backdrop-blur-sm rounded-2xl py-3 px-3 text-center hover:bg-opacity-30 transition-all" onclick="showDiscountCodes()">
+                            <div class="text-2xl mb-1">🎫</div>
+                            <div class="text-xs">โค้ดส่วนลด</div>
+                        </button>
+                        <button class="bg-white bg-opacity-20 backdrop-blur-sm rounded-2xl py-3 px-3 text-center hover:bg-opacity-30 transition-all" onclick="showPoints()">
+                            <div class="text-2xl mb-1">⭐</div>
+                            <div class="text-xs">คะแนนของคุณ</div>
+                        </button>
+                        <button class="bg-white bg-opacity-20 backdrop-blur-sm rounded-2xl py-3 px-3 text-center hover:bg-opacity-30 transition-all" onclick="showMembership()">
+                            <div class="text-2xl mb-1">👑</div>
+                            <div class="text-xs">ระดับสมาชิก</div>
+                        </button>
+                    </div>
+                </div>
+
+            <!-- Main Menu Icons (2 rows) -->
+            <div class="p-6">
+                <div class="grid grid-cols-4 gap-6">
+                    <!-- Row 1 -->
+                    <div class="text-center icon-bounce cursor-pointer" onclick="openFlightBooking()">
+                        <div class="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg">
+                            <span class="text-2xl">✈️</span>
+                        </div>
+                        <span class="text-white text-xs">จองเที่ยวบิน</span>
+                    </div>
+                    <div class="text-center icon-bounce cursor-pointer" onclick="bookHotel()">
+                        <div class="w-16 h-16 bg-blue-400 rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg">
+                            <span class="text-2xl">🏨</span>
+                        </div>
+                        <span class="text-white text-xs">จองที่พัก</span>
+                    </div>
+                    <div class="text-center icon-bounce cursor-pointer" onclick="bookLocalGuide()">
+                        <div class="w-16 h-16 bg-teal-400 rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg">
+                            <span class="text-2xl">👨‍🏫</span>
+                        </div>
+                        <span class="text-white text-xs">Local guide</span>
+                    </div>
+                    <div class="text-center icon-bounce cursor-pointer" onclick="rentCar()">
+                        <div class="w-16 h-16 bg-red-400 rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg">
+                            <span class="text-2xl">🚗</span>
+                        </div>
+                        <span class="text-white text-xs">บริการเช่ารถ</span>
+                    </div>
+                    
+                    <!-- Row 2 -->
+                    <div class="text-center icon-bounce cursor-pointer" onclick="bookTransfer()">
+                        <div class="w-16 h-16 bg-purple-400 rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg">
+                            <span class="text-2xl">🚐</span>
+                        </div>
+                        <span class="text-white text-xs">รถรับส่ง</span>
+                    </div>
+                    <div class="text-center icon-bounce cursor-pointer" onclick="bookBoat()">
+                        <div class="w-16 h-16 bg-cyan-400 rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg">
+                            <span class="text-2xl">⛵</span>
+                        </div>
+                        <span class="text-white text-xs">ล่องเรือ</span>
+                    </div>
+                    <div class="text-center icon-bounce cursor-pointer" onclick="digitalGuide()">
+                        <div class="w-16 h-16 bg-pink-400 rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg">
+                            <span class="text-2xl">📱</span>
+                        </div>
+                        <span class="text-white text-xs">digital guide</span>
+                    </div>
+                    <div class="text-center icon-bounce cursor-pointer" onclick="showMore()">
+                        <div class="w-16 h-16 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg">
+                            <span class="text-2xl">⋯</span>
+                        </div>
+                        <span class="text-white text-xs">บริการอื่นๆ</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Popular Hotels Section -->
+            <div class="px-6 pb-20">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-white text-lg font-semibold">โรงแรมยอดนิยม</h2>
+                    <button class="text-yellow-400 text-sm" onclick="viewAllHotels()">ดูทั้งหมด</button>
+                </div>
+                
+                <div class="space-y-4">
+                    <!-- Hotel Card 1 -->
+                    <div class="hotel-card bg-gray-700 rounded-2xl p-4 card-shadow">
+                        <div class="flex gap-4">
+                            <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center">
+                                <span class="text-3xl">🏖️</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start mb-1">
+                                    <h3 class="text-white font-semibold text-sm">Centara Grand Beach Resort</h3>
+                                    <button class="bookmark-heart text-gray-400 text-lg" onclick="toggleBookmark(this, 'Centara Grand Beach Resort')">♡</button>
+                                </div>
+                                <p class="text-gray-300 text-xs mb-2">ภูเก็ต • ติดชายหาด</p>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="flex text-yellow-400 text-xs">★★★★★</div>
+                                    <span class="text-gray-300 text-xs">(4.8)</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-yellow-400 font-semibold">฿3,500</span>
+                                    <button class="bg-yellow-400 text-gray-900 px-3 py-1 rounded-lg text-xs font-semibold hover:bg-yellow-300 transition-colors" onclick="goToReviewPage('Centara Grand Beach Resort')">จอง</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hotel Card 2 -->
+                    <div class="hotel-card bg-gray-700 rounded-2xl p-4 card-shadow">
+                        <div class="flex gap-4">
+                            <div class="w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center">
+                                <span class="text-3xl">🏔️</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start mb-1">
+                                    <h3 class="text-white font-semibold text-sm">Mountain View Resort</h3>
+                                    <button class="bookmark-heart text-gray-400 text-lg" onclick="toggleBookmark(this, 'Mountain View Resort')">♡</button>
+                                </div>
+                                <p class="text-gray-300 text-xs mb-2">เชียงใหม่ • วิวภูเขา</p>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="flex text-yellow-400 text-xs">★★★★☆</div>
+                                    <span class="text-gray-300 text-xs">(4.5)</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-yellow-400 font-semibold">฿2,200</span>
+                                    <button class="bg-yellow-400 text-gray-900 px-3 py-1 rounded-lg text-xs font-semibold hover:bg-yellow-300 transition-colors" onclick="goToReviewPage('Mountain View Resort')">จอง</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hotel Card 3 -->
+                    <div class="hotel-card bg-gray-700 rounded-2xl p-4 card-shadow">
+                        <div class="flex gap-4">
+                            <div class="w-20 h-20 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center">
+                                <span class="text-3xl">🏙️</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start mb-1">
+                                    <h3 class="text-white font-semibold text-sm">Bangkok Luxury Hotel</h3>
+                                    <button class="bookmark-heart text-gray-400 text-lg" onclick="toggleBookmark(this, 'Bangkok Luxury Hotel')">♡</button>
+                                </div>
+                                <p class="text-gray-300 text-xs mb-2">กรุงเทพฯ • ใจกลางเมือง</p>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="flex text-yellow-400 text-xs">★★★★★</div>
+                                    <span class="text-gray-300 text-xs">(4.9)</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-yellow-400 font-semibold">฿4,800</span>
+                                    <button class="bg-yellow-400 text-gray-900 px-3 py-1 rounded-lg text-xs font-semibold hover:bg-yellow-300 transition-colors" onclick="goToReviewPage('Bangkok Luxury Hotel')">จอง</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bookings Page -->
+        <div id="bookingsPage" class="page-content hidden">
+            <div class="yellow-gradient text-white p-6 rounded-b-3xl">
+                <h1 class="text-xl font-semibold">การจองของฉัน</h1>
+            </div>
+            <div class="p-6 pb-20">
+                <div id="bookingsList" class="space-y-4">
+                    <div class="text-center text-gray-400 py-8">
+                        <span class="text-4xl mb-4 block">📋</span>
+                        <p>ยังไม่มีการจอง</p>
+                        <p class="text-sm">เริ่มจองเที่ยวบินหรือที่พักได้เลย</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Favorites Page -->
+        <div id="favoritesPage" class="page-content hidden">
+            <div class="yellow-gradient text-white p-6 rounded-b-3xl">
+                <h1 class="text-xl font-semibold">รายการโปรด</h1>
+            </div>
+            <div class="p-6 pb-20">
+                <div id="favoritesList" class="space-y-4">
+                    <div id="emptyFavorites" class="text-center text-gray-400 py-8">
+                        <span class="text-4xl mb-4 block">❤️</span>
+                        <p>ยังไม่มีรายการโปรด</p>
+                        <p class="text-sm">กดหัวใจที่โรงแรมหรือบริการที่ชอบ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Page -->
+        <div id="notificationsPage" class="page-content hidden">
+            <div class="yellow-gradient text-white p-6 rounded-b-3xl">
+                <h1 class="text-xl font-semibold">การแจ้งเตือน</h1>
+            </div>
+            <div class="p-6 pb-20">
+                <div class="space-y-4">
+                    <div class="bg-gray-700 rounded-2xl p-4">
+                        <div class="flex gap-3">
+                            <span class="text-2xl">🎉</span>
+                            <div class="flex-1">
+                                <h3 class="text-white font-semibold text-sm">ยินดีต้อนรับสู่ GoGoTrip!</h3>
+                                <p class="text-gray-300 text-xs mt-1">รับโค้ดส่วนลด 20% สำหรับการจองครั้งแรก</p>
+                                <p class="text-gray-400 text-xs mt-2">2 ชั่วโมงที่แล้ว</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-700 rounded-2xl p-4">
+                        <div class="flex gap-3">
+                            <span class="text-2xl">✈️</span>
+                            <div class="flex-1">
+                                <h3 class="text-white font-semibold text-sm">เที่ยวบินของคุณได้รับการยืนยัน</h3>
+                                <p class="text-gray-300 text-xs mt-1">BKK-CNX วันที่ 20 ธ.ค. 2024</p>
+                                <p class="text-gray-400 text-xs mt-2">1 วันที่แล้ว</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-700 rounded-2xl p-4">
+                        <div class="flex gap-3">
+                            <span class="text-2xl">🏨</span>
+                            <div class="flex-1">
+                                <h3 class="text-white font-semibold text-sm">การจองโรงแรมสำเร็จ</h3>
+                                <p class="text-gray-300 text-xs mt-1">Centara Grand Beach Resort</p>
+                                <p class="text-gray-400 text-xs mt-2">2 วันที่แล้ว</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-700 rounded-2xl p-4">
+                        <div class="flex gap-3">
+                            <span class="text-2xl">⭐</span>
+                            <div class="flex-1">
+                                <h3 class="text-white font-semibold text-sm">คุณได้รับคะแนน 500 แต้ม!</h3>
+                                <p class="text-gray-300 text-xs mt-1">จากการจองโรงแรม</p>
+                                <p class="text-gray-400 text-xs mt-2">3 วันที่แล้ว</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-700 rounded-2xl p-4">
+                        <div class="flex gap-3">
+                            <span class="text-2xl">🎫</span>
+                            <div class="flex-1">
+                                <h3 class="text-white font-semibold text-sm">โค้ดส่วนลดใหม่!</h3>
+                                <p class="text-gray-300 text-xs mt-1">HOTEL50 - ลด 50% สำหรับโรงแรม</p>
+                                <p class="text-gray-400 text-xs mt-2">1 สัปดาห์ที่แล้ว</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Results Page -->
+        <div id="searchResultsPage" class="page-content hidden">
+            <div class="yellow-gradient text-white p-6 rounded-b-3xl">
+                <div class="flex items-center gap-3 mb-4">
+                    <button onclick="showPage('home')" class="text-white text-xl hover:text-yellow-200 transition-colors">←</button>
+                    <h1 class="text-xl font-semibold">ผลการค้นหา</h1>
+                </div>
+                <p class="text-sm opacity-80" id="searchQuery">ค้นหา: </p>
+            </div>
+            <div class="p-6 pb-20">
+                <div id="searchResults" class="space-y-4">
+                    <!-- Search results will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Points Earning Page -->
+        <div id="pointsEarningPage" class="page-content hidden">
+            <div class="yellow-gradient text-white p-6 rounded-b-3xl">
+                <div class="flex items-center gap-3 mb-4">
+                    <button onclick="showPage('home')" class="text-white text-xl">←</button>
+                    <h1 class="text-xl font-semibold">สะสมคะแนน</h1>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl mb-2">⭐</div>
+                    <p class="text-lg font-semibold" id="currentPointsDisplay">2,450 แต้ม</p>
+                </div>
+            </div>
+            <div class="p-6 pb-20">
+                <div class="bg-gray-700 rounded-2xl p-4 mb-6">
+                    <h3 class="text-white font-semibold mb-3">ทำ CAPTCHA เพื่อรับแต้ม</h3>
+                    <div class="text-center mb-4">
+                        <div class="bg-white rounded-xl p-4 mb-4 inline-block">
+                            <img id="captchaImage" src="https://static.wixstatic.com/media/ad67c9_46a3b9b7220047a7908763d6db926e87~mv2.jpg/v1/fill/w_1200,h_338,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/522199962_. _. 351_n.jpg" alt="CAPTCHA" class="w-full max-w-xs h-24 object-cover rounded">
+                        </div>
+                        <button onclick="refreshCaptcha()" class="text-yellow-400 text-sm mb-4">🔄 รีเฟรช CAPTCHA</button>
+                    </div>
+                    <div class="space-y-3">
+                        <input type="text" id="captchaInput" placeholder="พิมพ์ข้อความที่เห็นในรูป" class="w-full bg-gray-600 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                        <button onclick="submitCaptcha()" class="w-full bg-yellow-400 text-gray-900 font-semibold py-3 rounded-xl hover:bg-yellow-300 transition-colors">ส่งคำตอบ</button>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-700 rounded-2xl p-4">
+                    <h4 class="text-white font-semibold mb-2">วิธีการรับแต้ม</h4>
+                    <div class="space-y-2 text-sm text-gray-300">
+                        <div class="flex justify-between">
+                            <span>ทำ CAPTCHA สำเร็จ</span>
+                            <span class="text-yellow-400">+1 แต้ม</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>จองโรงแรม</span>
+                            <span class="text-yellow-400">+50 แต้ม</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>จองเที่ยวบิน</span>
+                            <span class="text-yellow-400">+30 แต้ม</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>รีวิวบริการ</span>
+                            <span class="text-yellow-400">+10 แต้ม</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Page -->
+        <div id="profilePage" class="page-content hidden">
+            <div class="yellow-gradient text-white p-6 rounded-b-3xl">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">👤</span>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-semibold">สมชาย ใจดี</h1>
+                        <p class="text-sm opacity-80" id="membershipDisplay">สมาชิก Member</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 pb-20">
+                <div class="space-y-4">
+                    <div class="bg-gray-700 rounded-2xl p-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="text-white font-semibold">คะแนนสะสม</h3>
+                                <p class="text-yellow-400 text-lg font-bold">2,450 แต้ม</p>
+                            </div>
+                            <span class="text-3xl">⭐</span>
+                        </div>
+                    </div>
+                    <div class="bg-gray-700 rounded-2xl p-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="text-white font-semibold">ระดับสมาชิก</h3>
+                                <p class="text-yellow-400 font-semibold" id="membershipLevel">Member</p>
+                                <button class="text-blue-400 text-sm mt-1" onclick="upgradeMembership()">อัพเกรดเป็น VIP</button>
+                            </div>
+                            <span class="text-3xl">👤</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <button class="w-full bg-gray-700 text-white p-4 rounded-2xl text-left flex justify-between items-center" onclick="editProfile()">
+                            <span>แก้ไขข้อมูลส่วนตัว</span>
+                            <span>›</span>
+                        </button>
+                        <button class="w-full bg-gray-700 text-white p-4 rounded-2xl text-left flex justify-between items-center" onclick="showSettings()">
+                            <span>การตั้งค่า</span>
+                            <span>›</span>
+                        </button>
+                        <button class="w-full bg-gray-700 text-white p-4 rounded-2xl text-left flex justify-between items-center" onclick="showHelp()">
+                            <span>ช่วยเหลือ</span>
+                            <span>›</span>
+                        </button>
+                        <button class="w-full bg-red-600 text-white p-4 rounded-2xl text-left flex justify-between items-center" onclick="logout()">
+                            <span>ออกจากระบบ</span>
+                            <span>›</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-gray-800 border-t border-gray-700">
+            <div class="grid grid-cols-5 py-2">
+                <button class="flex flex-col items-center py-2 text-yellow-400" onclick="showPage('home')">
+                    <span class="text-xl mb-1">🏠</span>
+                    <span class="text-xs">หน้าแรก</span>
+                </button>
+                <button class="flex flex-col items-center py-2 text-gray-400 hover:text-white transition-colors relative" onclick="showPage('bookings')">
+                    <div class="relative">
+                        <span class="text-xl mb-1">📋</span>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                    </div>
+                    <span class="text-xs">การจอง</span>
+                </button>
+                <button class="flex flex-col items-center py-2 text-gray-400 hover:text-white transition-colors relative" onclick="showPage('favorites')">
+                    <div class="relative">
+                        <span class="text-xl mb-1">❤️</span>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                    </div>
+                    <span class="text-xs">รายการโปรด</span>
+                </button>
+                <button class="flex flex-col items-center py-2 text-gray-400 hover:text-white transition-colors relative" onclick="showPage('notifications')">
+                    <div class="relative">
+                        <span class="text-xl mb-1">🔔</span>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">5</span>
+                    </div>
+                    <span class="text-xs">แจ้งเตือน</span>
+                </button>
+                <button class="flex flex-col items-center py-2 text-gray-400 hover:text-white transition-colors" onclick="showPage('profile')">
+                    <span class="text-xl mb-1">👤</span>
+                    <span class="text-xs">โปรไฟล์</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Modal -->
+    <div id="chatModal" class="modal">
+        <div class="bg-gray-800 w-full max-w-md mx-4 rounded-t-3xl slide-up max-h-96 flex flex-col">
+            <div class="yellow-gradient text-white p-4 rounded-t-3xl flex justify-between items-center">
+                <h3 class="font-semibold">แชทสอบถาม</h3>
+                <button onclick="closeChat()" class="text-white text-xl">✕</button>
+            </div>
+            <div class="flex-1 p-4 overflow-y-auto">
+                <div class="space-y-3">
+                    <div class="bg-gray-700 rounded-2xl p-3 max-w-xs">
+                        <p class="text-white text-sm">สวัสดีครับ! มีอะไรให้ช่วยเหลือไหมครับ?</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-700">
+                <div class="flex gap-2">
+                    <input type="text" placeholder="พิมพ์ข้อความ..." class="flex-1 bg-gray-700 text-white rounded-2xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400" id="chatInput">
+                    <button class="bg-yellow-400 text-gray-900 rounded-2xl px-4 py-2 font-semibold hover:bg-yellow-300 transition-colors" onclick="sendMessage()">ส่ง</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Discount Codes Modal -->
+    <div id="discountModal" class="modal">
+        <div class="bg-gray-800 w-full max-w-md mx-4 rounded-t-3xl slide-up max-h-96">
+            <div class="yellow-gradient text-white p-4 rounded-t-3xl flex justify-between items-center">
+                <h3 class="font-semibold">โค้ดส่วนลด</h3>
+                <button onclick="closeDiscountCodes()" class="text-white text-xl">✕</button>
+            </div>
+            <div class="p-4 space-y-3">
+                <div class="bg-gray-700 rounded-2xl p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-yellow-400 font-semibold">HOTEL50</span>
+                        <span class="text-green-400 text-sm">ใช้ได้</span>
+                    </div>
+                    <p class="text-white text-sm mb-2">ลด 50% สำหรับการจองโรงแรม</p>
+                    <p class="text-gray-400 text-xs">หมดอายุ: 31 ธ.ค. 2024</p>
+                </div>
+                <div class="bg-gray-700 rounded-2xl p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-yellow-400 font-semibold">FLIGHT20</span>
+                        <span class="text-green-400 text-sm">ใช้ได้</span>
+                    </div>
+                    <p class="text-white text-sm mb-2">ลด 20% สำหรับตั้วเที่ยวบิน</p>
+                    <p class="text-gray-400 text-xs">หมดอายุ: 15 ม.ค. 2025</p>
+                </div>
+                <button class="w-full bg-yellow-400 text-gray-900 font-semibold py-3 rounded-2xl hover:bg-yellow-300 transition-colors" onclick="collectDiscountCode()">เก็บโค้ดส่วนลด</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="bg-gray-800 w-full max-w-md mx-4 rounded-t-3xl slide-up">
+            <div class="yellow-gradient text-white p-4 rounded-t-3xl flex justify-between items-center">
+                <h3 class="font-semibold">เข้าสู่ระบบ</h3>
+                <button onclick="closeLogin()" class="text-white text-xl">✕</button>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-white text-sm block mb-2">อีเมลหรือเบอร์โทร</label>
+                        <input type="text" class="w-full bg-gray-700 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400" placeholder="กรอกอีเมลหรือเบอร์โทร">
+                    </div>
+                    <div>
+                        <label class="text-white text-sm block mb-2">รหัสผ่าน</label>
+                        <input type="password" class="w-full bg-gray-700 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400" placeholder="กรอกรหัสผ่าน">
+                    </div>
+                    <button class="w-full bg-yellow-400 text-gray-900 font-semibold py-3 rounded-2xl hover:bg-yellow-300 transition-colors" onclick="login()">เข้าสู่ระบบ</button>
+                    
+                    <div class="text-center">
+                        <button class="text-yellow-400 text-sm" onclick="forgotPassword()">ลืมรหัสผ่าน?</button>
+                    </div>
+                    
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-600"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-2 bg-gray-800 text-gray-400">หรือ</span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <button class="w-full bg-blue-600 text-white py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors" onclick="loginWithFacebook()">
+                            <span>📘</span>
+                            <span>เข้าสู่ระบบด้วย Facebook</span>
+                        </button>
+                        <button class="w-full bg-white text-gray-900 py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors" onclick="loginWithGoogle()">
+                            <span>🔍</span>
+                            <span>เข้าสู่ระบบด้วย Google</span>
+                        </button>
+                    </div>
+                    
+                    <div class="text-center">
+                        <span class="text-gray-400 text-sm">ยังไม่มีบัญชี? </span>
+                        <button class="text-yellow-400 text-sm" onclick="showRegister()">สมัครสมาชิก</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="modal">
+        <div class="bg-gray-800 w-full max-w-md mx-4 rounded-t-3xl slide-up">
+            <div class="yellow-gradient text-white p-4 rounded-t-3xl flex justify-between items-center">
+                <h3 class="font-semibold">สมัครสมาชิก</h3>
+                <button onclick="closeRegister()" class="text-white text-xl">✕</button>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-white text-sm block mb-2">ชื่อ-นามสกุล</label>
+                        <input type="text" class="w-full bg-gray-700 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400" placeholder="กรอกชื่อ-นามสกุล">
+                    </div>
+                    <div>
+                        <label class="text-white text-sm block mb-2">อีเมล</label>
+                        <input type="email" class="w-full bg-gray-700 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400" placeholder="กรอกอีเมล">
+                    </div>
+                    <div>
+                        <label class="text-white text-sm block mb-2">เบอร์โทรศัพท์</label>
+                        <input type="tel" class="w-full bg-gray-700 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400" placeholder="กรอกเบอร์โทรศัพท์">
+                    </div>
+                    <div>
+                        <label class="text-white text-sm block mb-2">รหัสผ่าน</label>
+                        <input type="password" class="w-full bg-gray-700 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400" placeholder="กรอกรหัสผ่าน">
+                    </div>
+                    <div>
+                        <label class="text-white text-sm block mb-2">ยืนยันรหัสผ่าน</label>
+                        <input type="password" class="w-full bg-gray-700 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400" placeholder="ยืนยันรหัสผ่าน">
+                    </div>
+                    <button class="w-full bg-yellow-400 text-gray-900 font-semibold py-3 rounded-2xl hover:bg-yellow-300 transition-colors" onclick="register()">สมัครสมาชิก</button>
+                    
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-600"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-2 bg-gray-800 text-gray-400">หรือ</span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <button class="w-full bg-blue-600 text-white py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors" onclick="registerWithFacebook()">
+                            <span>📘</span>
+                            <span>สมัครด้วย Facebook</span>
+                        </button>
+                        <button class="w-full bg-white text-gray-900 py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors" onclick="registerWithGoogle()">
+                            <span>🔍</span>
+                            <span>สมัครด้วย Google</span>
+                        </button>
+                    </div>
+                    
+                    <div class="text-center">
+                        <span class="text-gray-400 text-sm">มีบัญชีแล้ว? </span>
+                        <button class="text-yellow-400 text-sm" onclick="showLogin()">เข้าสู่ระบบ</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flight Booking Modal -->
+    <div id="flightModal" class="modal">
+        <div class="bg-gray-800 w-full max-w-md mx-4 rounded-t-3xl slide-up max-h-screen overflow-y-auto">
+            <div class="yellow-gradient text-white p-4 rounded-t-3xl flex justify-between items-center">
+                <h3 class="font-semibold">จองตั๋วเครื่องบิน</h3>
+                <button onclick="closeFlightModal()" class="text-white text-xl">✕</button>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <!-- Trip Type -->
+                    <div>
+                        <label class="text-white text-sm block mb-2">ประเภทการเดินทาง</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button class="bg-yellow-400 text-gray-900 py-2 px-3 rounded-xl text-sm font-semibold" onclick="selectTripType('oneway')">ขาเดียว</button>
+                            <button class="bg-gray-700 text-white py-2 px-3 rounded-xl text-sm" onclick="selectTripType('roundtrip')">ไป-กลับ</button>
+                            <button class="bg-gray-700 text-white py-2 px-3 rounded-xl text-sm" onclick="selectTripType('multicity')">หลายเมือง</button>
+                        </div>
+                    </div>
+                    
+                    <!-- From -->
+                    <div>
+                        <label class="text-white text-sm block mb-2">จาก</label>
+                        <select class="w-full bg-gray-700 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400" id="fromAirport">
+                            <option value="">เลือกสนามบิน</option>
+                            <option value="BKK">กรุงเทพฯ สุวรรณภูมิ (BKK)</option>
+                            <option value="DMK">กรุงเทพฯ ดอนเมือง (DMK)</option>
+                            <option value="CNX">เชียงใหม่ (CNX)</option>
+                            <option value="HKT">ภูเก็ต (HKT)</option>
+                            <option value="KBV">กระบี่ (KBV)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- To -->
+                    <div>
+                        <label class="text-white text-sm block mb-2">ไป</label>
+                        <select class="w-full bg-gray-700 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400" id="toAirport">
+                            <option value="">เลือกสนามบิน</option>
+                            <option value="BKK">กรุงเทพฯ สุวรรณภูมิ (BKK)</option>
+                            <option value="DMK">กรุงเทพฯ ดอนเมือง (DMK)</option>
+                            <option value="CNX">เชียงใหม่ (CNX)</option>
+                            <option value="HKT">ภูเก็ต (HKT)</option>
+                            <option value="KBV">กระบี่ (KBV)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Departure Date -->
+                    <div>
+                        <label class="text-white text-sm block mb-2">วันที่เดินทาง</label>
+                        <input type="date" class="w-full bg-gray-700 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400" id="departureDate">
+                    </div>
+                    
+                    <!-- Passengers -->
+                    <div>
+                        <label class="text-white text-sm block mb-2">จำนวนผู้โดยสาร</label>
+                        <select class="w-full bg-gray-700 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400" id="passengers">
+                            <option value="1">1 ผู้โดยสาร</option>
+                            <option value="2">2 ผู้โดยสาร</option>
+                            <option value="3">3 ผู้โดยสาร</option>
+                            <option value="4">4 ผู้โดยสาร</option>
+                        </select>
+                    </div>
+                    
+                    <button class="w-full bg-yellow-400 text-gray-900 font-semibold py-3 rounded-2xl hover:bg-yellow-300 transition-colors" onclick="searchFlights()">ค้นหาเที่ยวบิน</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hotel Booking Modal -->
+    <div id="hotelModal" class="modal">
+        <div class="bg-gray-800 w-full max-w-md mx-4 rounded-t-3xl slide-up max-h-screen overflow-y-auto">
+            <div class="yellow-gradient text-white p-4 rounded-t-3xl flex justify-between items-center">
+                <h3 class="font-semibold">จองที่พัก</h3>
+                <button onclick="closeHotelModal()" class="text-white text-xl">✕</button>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-white text-sm block mb-2">จังหวัด/เมือง</label>
+                        <select class="w-full bg-gray-700 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400" id="hotelLocation">
+                            <option value="">เลือกจังหวัด</option>
+                            <option value="bangkok">กรุงเทพฯ</option>
+                            <option value="chiangmai">เชียงใหม่</option>
+                            <option value="phuket">ภูเก็ต</option>
+                            <option value="krabi">กระบี่</option>
+                            <option value="pattaya">พัทยา</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="text-white text-sm block mb-2">วันที่เช็คอิน</label>
+                        <input type="date" class="w-full bg-gray-700 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400" id="checkinDate">
+                    </div>
+                    
+                    <div>
+                        <label class="text-white text-sm block mb-2">วันที่เช็คเอาท์</label>
+                        <input type="date" class="w-full bg-gray-700 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400" id="checkoutDate">
+                    </div>
+                    
+                    <div>
+                        <label class="text-white text-sm block mb-2">จำนวนผู้เข้าพัก</label>
+                        <select class="w-full bg-gray-700 text-white rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400" id="hotelGuests">
+                            <option value="1">1 คน</option>
+                            <option value="2">2 คน</option>
+                            <option value="3">3 คน</option>
+                            <option value="4">4 คน</option>
+                        </select>
+                    </div>
+                    
+                    <button class="w-full bg-yellow-400 text-gray-900 font-semibold py-3 rounded-2xl hover:bg-yellow-300 transition-colors" onclick="searchHotels()">ค้นหาที่พัก</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Points Modal -->
+    <div id="pointsModal" class="modal">
+        <div class="bg-gray-800 w-full max-w-md mx-4 rounded-t-3xl slide-up max-h-screen overflow-y-auto">
+            <div class="yellow-gradient text-white p-4 rounded-t-3xl flex justify-between items-center">
+                <h3 class="font-semibold">คะแนนของคุณ</h3>
+                <button onclick="closePointsModal()" class="text-white text-xl">✕</button>
+            </div>
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="text-6xl mb-4">⭐</div>
+                    <h2 class="text-white text-2xl font-bold mb-2" id="currentPoints">2,450 แต้ม</h2>
+                    <p class="text-gray-300">คะแนนสะสมของคุณ</p>
+                </div>
+                <button class="w-full bg-yellow-400 text-gray-900 font-semibold py-3 rounded-2xl hover:bg-yellow-300 transition-colors" onclick="earnMorePoints()">เก็บคะแนนเพิ่ม</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIP Membership Modal -->
+    <div id="vipModal" class="modal">
+        <div class="bg-gray-800 w-full max-w-md mx-4 rounded-t-3xl slide-up max-h-screen overflow-y-auto">
+            <div class="yellow-gradient text-white p-4 rounded-t-3xl flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                        <span class="text-sm font-bold text-gray-900">VIP</span>
+                    </div>
+                    <h3 class="font-semibold">GoGoTrip VIP</h3>
+                </div>
+                <button onclick="closeVipModal()" class="text-white text-xl">✕</button>
+            </div>
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl font-bold text-gray-900">VIP</span>
+                    </div>
+                    <h2 class="text-white text-xl font-bold mb-2">เป็นสมาชิกวันนี้</h2>
+                    <p class="text-gray-300">ได้มากกว่าทุกการจอง</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gray-700 rounded-2xl p-4 text-center">
+                        <div class="text-2xl mb-2">🧠</div>
+                        <h4 class="text-white font-semibold text-sm mb-2">รับคะแนนจาก CAPTCHA มากขึ้น</h4>
+                        <p class="text-gray-300 text-xs">ผู้ใช้ทั่วไป = 1 แต้ม/ครั้ง<br>สมาชิก = 1-5 แต้ม/ครั้ง</p>
+                    </div>
+                    
+                    <div class="bg-gray-700 rounded-2xl p-4 text-center">
+                        <div class="text-2xl mb-2">🎁</div>
+                        <h4 class="text-white font-semibold text-sm mb-2">ได้รับคูปองเฉพาะวันพิเศษ</h4>
+                        <p class="text-gray-300 text-xs">คูปองวันเกิด, วันหยุดยาว, วันครบรอบ</p>
+                    </div>
+                    
+                    <div class="bg-gray-700 rounded-2xl p-4 text-center">
+                        <div class="text-2xl mb-2">🔒</div>
+                        <h4 class="text-white font-semibold text-sm mb-2">เข้าถึงโปรโมชันลับ</h4>
+                        <p class="text-gray-300 text-xs">โปรโมชันพิเศษเฉพาะสมาชิก VIP</p>
+                    </div>
+                    
+                    <div class="bg-gray-700 rounded-2xl p-4 text-center">
+                        <div class="text-2xl mb-2">⚡</div>
+                        <h4 class="text-white font-semibold text-sm mb-2">สะสมแต้มได้เร็วกว่า</h4>
+                        <p class="text-gray-300 text-xs">ได้รับแต้มเพิ่มจากการจอง รีวิว แชร์</p>
+                    </div>
+                </div>
+                
+                <button class="w-full bg-gradient-to-r from-orange-400 to-yellow-400 text-gray-900 font-bold py-4 rounded-2xl hover:from-orange-500 hover:to-yellow-500 transition-all" onclick="startVipTrial()">ทดลองใช้ฟรี</button>
+                <p class="text-center text-gray-400 text-xs mt-2">ทดลอง 7 วัน ก่อนเสียค่าบริการรายปี</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Selection Modal -->
+    <div id="roomModal" class="modal">
+        <div class="bg-gray-800 w-full max-w-md mx-4 rounded-t-3xl slide-up max-h-screen overflow-y-auto">
+            <div class="yellow-gradient text-white p-4 rounded-t-3xl flex justify-between items-center">
+                <h3 class="font-semibold">เลือกประเภทห้อง</h3>
+                <button onclick="closeRoomModal()" class="text-white text-xl">✕</button>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div class="bg-gray-700 rounded-2xl p-4 cursor-pointer hover:bg-gray-600 transition-colors" onclick="selectRoom('standard', 2500)">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h4 class="text-white font-semibold">Standard Room</h4>
+                                <p class="text-gray-300 text-sm">เตียงเดี่ยว • 25 ตร.ม. • Wi-Fi ฟรี</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-yellow-400 font-bold">฿2,500</p>
+                                <p class="text-gray-400 text-xs">ต่อคืน</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-700 rounded-2xl p-4 cursor-pointer hover:bg-gray-600 transition-colors" onclick="selectRoom('deluxe', 3500)">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h4 class="text-white font-semibold">Deluxe Room</h4>
+                                <p class="text-gray-300 text-sm">เตียงคิงไซส์ • 35 ตร.ม. • วิวทะเล</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-yellow-400 font-bold">฿3,500</p>
+                                <p class="text-gray-400 text-xs">ต่อคืน</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-700 rounded-2xl p-4 cursor-pointer hover:bg-gray-600 transition-colors" onclick="selectRoom('suite', 5500)">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h4 class="text-white font-semibold">Suite Room</h4>
+                                <p class="text-gray-300 text-sm">ห้องนั่งเล่น • 50 ตร.ม. • บัลโคนี่</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-yellow-400 font-bold">฿5,500</p>
+                                <p class="text-gray-400 text-xs">ต่อคืน</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="bg-gray-800 w-full max-w-md mx-4 rounded-t-3xl slide-up max-h-screen overflow-y-auto">
+            <div class="yellow-gradient text-white p-4 rounded-t-3xl flex justify-between items-center">
+                <h3 class="font-semibold">ชำระเงิน</h3>
+                <button onclick="closePaymentModal()" class="text-white text-xl">✕</button>
+            </div>
+            <div class="p-6">
+                <!-- Section 1: Booking Summary -->
+                <div class="bg-gray-700 rounded-2xl p-4 mb-4">
+                    <h4 class="text-white font-semibold mb-3">สรุปรายการจอง</h4>
+                    <div class="flex gap-3 mb-3">
+                        <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center">
+                            <span class="text-2xl" id="bookingIcon">🏨</span>
+                        </div>
+                        <div class="flex-1">
+                            <h5 class="text-white font-semibold text-sm" id="bookingTitle">โรงแรม</h5>
+                            <p class="text-gray-300 text-xs" id="bookingDetails">รายละเอียด</p>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="text-gray-300 text-xs" id="bookingQuantity">x1</span>
+                                <span class="text-yellow-400 font-semibold" id="bookingPrice">฿0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Discounts -->
+                <div class="bg-gray-700 rounded-2xl p-4 mb-4">
+                    <h4 class="text-white font-semibold mb-3">ส่วนลด</h4>
+                    
+                    <!-- Discount Code -->
+                    <div class="mb-3">
+                        <label class="text-white text-sm block mb-2">โค้ดส่วนลด</label>
+                        
+                        <!-- Available Discount Codes -->
+                        <div class="mb-3">
+                            <p class="text-gray-300 text-xs mb-2">โค้ดที่มีอยู่:</p>
+                            <div class="space-y-2 max-h-32 overflow-y-auto">
+                                <div class="bg-gray-600 rounded-lg p-2 cursor-pointer hover:bg-gray-500 transition-colors" onclick="selectDiscountCode('HOTEL50')">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <span class="text-yellow-400 font-semibold text-sm">HOTEL50</span>
+                                            <p class="text-gray-300 text-xs">ลด 50% สำหรับการจองโรงแรม</p>
+                                        </div>
+                                        <span class="text-green-400 text-xs">ใช้ได้</span>
+                                    </div>
+                                </div>
+                                <div class="bg-gray-600 rounded-lg p-2 cursor-pointer hover:bg-gray-500 transition-colors" onclick="selectDiscountCode('FLIGHT20')">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <span class="text-yellow-400 font-semibold text-sm">FLIGHT20</span>
+                                            <p class="text-gray-300 text-xs">ลด 20% สำหรับตั๋วเที่ยวบิน</p>
+                                        </div>
+                                        <span class="text-green-400 text-xs">ใช้ได้</span>
+                                    </div>
+                                </div>
+                                <div class="bg-gray-600 rounded-lg p-2 cursor-pointer hover:bg-gray-500 transition-colors" onclick="selectDiscountCode('NEWUSER30')">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <span class="text-yellow-400 font-semibold text-sm">NEWUSER30</span>
+                                            <p class="text-gray-300 text-xs">ลด 30% สำหรับสมาชิกใหม่</p>
+                                        </div>
+                                        <span class="text-green-400 text-xs">ใช้ได้</span>
+                                    </div>
+                                </div>
+                                <div class="bg-gray-600 rounded-lg p-2 cursor-pointer hover:bg-gray-500 transition-colors" onclick="selectDiscountCode('WEEKEND15')">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <span class="text-yellow-400 font-semibold text-sm">WEEKEND15</span>
+                                            <p class="text-gray-300 text-xs">ลด 15% สำหรับการจองวันหยุด</p>
+                                        </div>
+                                        <span class="text-green-400 text-xs">ใช้ได้</span>
+                                    </div>
+                                </div>
+                                <div class="bg-gray-600 rounded-lg p-2 opacity-50">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <span class="text-gray-400 font-semibold text-sm">VIP40</span>
+                                            <p class="text-gray-400 text-xs">ลด 40% สำหรับสมาชิก VIP</p>
+                                        </div>
+                                        <span class="text-red-400 text-xs">หมดอายุ</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Manual Input -->
+                        <div class="border-t border-gray-600 pt-3">
+                            <p class="text-gray-300 text-xs mb-2">หรือกรอกโค้ดเอง:</p>
+                            <div class="flex gap-2">
+                                <input type="text" id="discountCode" placeholder="กรอกโค้ดส่วนลด" class="flex-1 bg-gray-600 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                                <button onclick="applyDiscountCode()" class="bg-yellow-400 text-gray-900 px-3 py-2 rounded-xl text-sm font-semibold hover:bg-yellow-300 transition-colors">ใช้</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Points Discount -->
+                    <div class="mb-3">
+                        <label class="text-white text-sm block mb-2">ใช้คะแนนสะสม (1 แต้ม = 1 บาท)</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="pointsToUse" placeholder="0" min="0" max="2450" class="flex-1 bg-gray-600 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                            <button onclick="applyPoints()" class="bg-yellow-400 text-gray-900 px-3 py-2 rounded-xl text-sm font-semibold hover:bg-yellow-300 transition-colors">ใช้</button>
+                        </div>
+                        <p class="text-gray-400 text-xs mt-1">คะแนนที่มี: 2,450 แต้ม</p>
+                    </div>
+                    
+                    <!-- Applied Discounts -->
+                    <div id="appliedDiscounts" class="space-y-1">
+                        <!-- Applied discounts will appear here -->
+                    </div>
+                </div>
+
+                <!-- Section 3: Insurance Option -->
+                <div class="bg-gray-700 rounded-2xl p-4 mb-4">
+                    <h4 class="text-white font-semibold mb-3">ประกันการเดินทาง</h4>
+                    <div class="bg-gray-600 rounded-xl p-3">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input type="checkbox" id="insuranceCheckbox" class="mt-1 w-4 h-4 text-yellow-400 bg-gray-600 border-gray-500 rounded focus:ring-yellow-400" onchange="toggleInsurance()">
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start mb-1">
+                                    <span class="text-white font-semibold text-sm">ซื้อประกันการเดินทาง</span>
+                                    <span class="text-yellow-400 font-semibold text-sm" id="insurancePrice">+฿0</span>
+                                </div>
+                                <p class="text-gray-300 text-xs mb-2">คุ้มครองการยกเลิกการเดินทาง, การล่าช้า, และอุบัติเหตุ</p>
+                                <div class="text-xs text-gray-400">
+                                    <div>• คุ้มครองสูงสุด 100,000 บาท</div>
+                                    <div>• ยกเลิกการเดินทางได้ 24 ชม. ก่อนเดินทาง</div>
+                                    <div>• คุ้มครองกรณีเจ็บป่วยฉุกเฉิน</div>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Section 4: Payment Methods -->
+                <div class="bg-gray-700 rounded-2xl p-4 mb-4">
+                    <h4 class="text-white font-semibold mb-3">ช่องทางการชำระเงิน</h4>
+                    <div class="space-y-2">
+                        <button class="w-full bg-gray-600 text-white p-3 rounded-xl text-left flex items-center gap-3 hover:bg-gray-500 transition-colors payment-method" onclick="selectPaymentMethod('mobile-banking')">
+                            <span class="text-xl">🏦</span>
+                            <span>Mobile Banking</span>
+                        </button>
+                        <button class="w-full bg-gray-600 text-white p-3 rounded-xl text-left flex items-center gap-3 hover:bg-gray-500 transition-colors payment-method" onclick="selectPaymentMethod('credit-card')">
+                            <span class="text-xl">💳</span>
+                            <span>ตัดผ่านบัตรเครดิต/เดบิต</span>
+                        </button>
+                        <button class="w-full bg-gray-600 text-white p-3 rounded-xl text-left flex items-center gap-3 hover:bg-gray-500 transition-colors payment-method" onclick="selectPaymentMethod('promptpay')">
+                            <span class="text-xl">📱</span>
+                            <span>QR พร้อมเพย์</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Section 5: Price Summary -->
+                <div class="bg-gray-700 rounded-2xl p-4 mb-4">
+                    <h4 class="text-white font-semibold mb-3">สรุปราคา</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-300">ราคาสินค้ารวม:</span>
+                            <span class="text-white" id="subtotalPrice">฿0</span>
+                        </div>
+                        <div class="flex justify-between" id="insuranceRow" style="display: none;">
+                            <span class="text-gray-300">ประกันการเดินทาง:</span>
+                            <span class="text-yellow-400" id="insuranceAmount">+฿0</span>
+                        </div>
+                        <div class="flex justify-between" id="codeDiscountRow" style="display: none;">
+                            <span class="text-gray-300">ส่วนลดโค้ด:</span>
+                            <span class="text-green-400" id="codeDiscountAmount">-฿0</span>
+                        </div>
+                        <div class="flex justify-between" id="pointsDiscountRow" style="display: none;">
+                            <span class="text-gray-300">ส่วนลดคะแนน:</span>
+                            <span class="text-green-400" id="pointsDiscountAmount">-฿0</span>
+                        </div>
+                        <div class="border-t border-gray-600 pt-2 mt-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-white font-semibold">ยอดชำระเงินทั้งหมด:</span>
+                                <span class="text-yellow-400 font-bold text-lg" id="finalAmount">฿0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terms and Payment -->
+                <div class="space-y-4">
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="checkbox" id="termsAccepted" class="mt-1 w-4 h-4 text-yellow-400 bg-gray-600 border-gray-500 rounded focus:ring-yellow-400">
+                        <span class="text-gray-300 text-sm">โดยการคลิกชำระเงิน ฉันได้อ่านและยอมรับเงื่อนไขบริการ GoGoTrip แล้ว</span>
+                    </label>
+                    
+                    <button class="w-full bg-orange-500 text-white font-bold py-4 rounded-2xl hover:bg-orange-600 transition-colors flex items-center justify-center gap-2" onclick="processPayment()">
+                        <span>ชำระเงิน</span>
+                        <span class="font-bold" id="paymentButtonAmount">฿0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div id="qrModal" class="modal">
+        <div class="bg-gray-800 w-full max-w-md mx-4 rounded-t-3xl slide-up">
+            <div class="yellow-gradient text-white p-4 rounded-t-3xl flex justify-between items-center">
+                <h3 class="font-semibold">สแกน QR Code</h3>
+                <button onclick="closeQRModal()" class="text-white text-xl">✕</button>
+            </div>
+            <div class="p-6 text-center">
+                <div class="bg-white rounded-2xl p-4 mb-4 inline-block">
+                    <img src="https://promptpay.io/0661127624.png" alt="QR Code" class="w-48 h-48 mx-auto">
+                </div>
+                <p class="text-white mb-2">สแกน QR Code เพื่อชำระเงิน</p>
+                <p class="text-yellow-400 font-bold text-lg" id="qrAmount">฿0</p>
+                <button class="w-full bg-green-500 text-white font-semibold py-3 rounded-2xl hover:bg-green-600 transition-colors mt-4" onclick="confirmQRPayment()">ยืนยันการชำระเงิน</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Points Notification Modal -->
+    <div id="pointsNotificationModal" class="modal">
+        <div class="bg-gray-800 w-full max-w-sm mx-4 rounded-2xl slide-up">
+            <div class="p-6 text-center">
+                <div class="text-6xl mb-4" id="pointsNotificationIcon">⭐</div>
+                <h3 class="text-white font-semibold text-lg mb-2" id="pointsNotificationTitle">ได้รับแต้ม!</h3>
+                <p class="text-gray-300 mb-4" id="pointsNotificationMessage">คุณได้รับ +1 แต้ม</p>
+                <p class="text-yellow-400 font-bold text-xl mb-4" id="pointsNotificationTotal">รวม: 2,451 แต้ม</p>
+                <button onclick="closePointsNotification()" class="w-full bg-yellow-400 text-gray-900 font-semibold py-3 rounded-xl hover:bg-yellow-300 transition-colors">ตกลง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Page -->
+    <div id="reviewPage" class="hidden">
+        <div id="reviewPage" class="hidden bg-gray-900 min-h-screen text-white">
+        
+        <!-- Header -->
+        <header class="bg-gray-800 p-4 shadow-lg">
+            <h1 class="text-xl font-bold text-center text-yellow-400">📝 Review Page</h1>
+        </header>
+
+        <!-- Main Content -->
+        <main class="p-6 max-w-md mx-auto space-y-6">
+            <p class="text-center text-gray-300">
+            โปรดเลือกขนาดห้องเพื่อดำเนินการต่อ
+            </p>
+            <div class="flex justify-center">
+            <button onclick="bookHotelRoom()" class="bg-yellow-400 text-black px-4 py-2 rounded-lg font-bold hover:bg-yellow-300">
+                เลือกขนาดห้องเพื่อดำเนินการต่อ
+            </button>
+            </div>
+        </main>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let isLoggedIn = false;
+        let favoriteItems = [];
+        let currentPage = 'home';
+        let membershipLevel = 'Member';
+        let bookings = [];
+        let userPoints = 2450;
+        let currentHotelBooking = {};
+        let selectedPaymentMethod = null;
+        let appliedDiscountCode = null;
+        let appliedPointsDiscount = 0;
+        let insuranceSelected = false;
+        let insurancePrice = 0;
+        let currentCaptchaAnswer = 'TRAVEL2024';
+        let captchaImages = [
+            {
+                url: 'https://static.wixstatic.com/media/ad67c9_46a3b9b7220047a7908763d6db926e87~mv2.jpg/v1/fill/w_1200,h_338,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/522199962_. _. 351_n.jpg',
+                answer: 'TRAVEL2024'
+            },
+            {
+                url: 'https://static.wixstatic.com/media/ad67c9_dc1c24d2e4e246518c45af9b2ccc293d~mv2.jpg/v1/fill/w_1200,h_344,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/522276011_. _. 600_n.jpg',
+                answer: 'GOGOTRIP'
+            }
+        ];
+        let currentCaptchaIndex = 0;
+        
+        // Update notification badges
+        function updateBookingsBadge() {
+            const badge = document.querySelector('[onclick="showPage(\'bookings\')"] .bg-red-500');
+            if (badge) {
+                badge.textContent = bookings.length;
+            }
+        }
+        
+        function updateFavoritesBadge() {
+            const badge = document.querySelector('[onclick="showPage(\'favorites\')"] .bg-red-500');
+            if (badge) {
+                badge.textContent = favoriteItems.length;
+            }
+        }
+        
+        // Page navigation
+        function showPage(pageName) {
+            // Check login for protected pages
+            if (!isLoggedIn && (pageName === 'bookings' || pageName === 'favorites' || pageName === 'notifications' || pageName === 'profile')) {
+                showLogin();
+                return;
+                
+            }
+            
+            // Hide all pages
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.classList.add('hidden');
+            });
+            
+            // Show selected page
+            document.getElementById(pageName + 'Page').classList.remove('hidden');
+
+            if (pageName === 'favorites') {
+                renderFavorites(); // ← ดึงรายการมาแสดงตอนเข้า
+            }
+
+
+            // ✅ เพิ่มส่วนนี้เข้าไป
+            if (pageName === 'favorites') {
+                renderFavorites();
+            }
+
+            // ✅ เรียกแสดงรายการโปรด
+            if (pageName === 'favorites') {
+                renderFavorites();
+            }
+
+            // Update navigation active state
+            document.querySelectorAll('.grid.grid-cols-5 button').forEach(btn => {
+                btn.classList.remove('text-yellow-400');
+                btn.classList.add('text-gray-400');
+            });
+            
+            // Set active tab
+            const activeButton = document.querySelector(`[onclick="showPage('${pageName}')"]`);
+            if (activeButton) {
+                activeButton.classList.add('text-yellow-400');
+                activeButton.classList.remove('text-gray-400');
+            }
+            
+            currentPage = pageName;
+        }
+
+        // Search functionality
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) {
+                alert('กรุณากรอกคำค้นหา');
+                return;
+            }
+            
+            // Show search results page
+            document.getElementById('searchQuery').textContent = `ค้นหา: ${query}`;
+            showSearchResults(query);
+            showPage('searchResults');
+        }
+        
+        function showSearchResults(query) {
+            const resultsContainer = document.getElementById('searchResults');
+            const lowerQuery = query.toLowerCase();
+            
+            let results = [];
+            
+            // Search hotels
+            const hotels = [
+                { name: 'Centara Grand Beach Resort', location: 'ภูเก็ต', price: 3500, type: 'hotel', icon: '🏖️' },
+                { name: 'Mountain View Resort', location: 'เชียงใหม่', price: 2200, type: 'hotel', icon: '🏔️' },
+                { name: 'Bangkok Luxury Hotel', location: 'กรุงเทพฯ', price: 4800, type: 'hotel', icon: '🏙️' },
+                { name: 'Phuket Beach Resort', location: 'ภูเก็ต', price: 2800, type: 'hotel', icon: '🏖️' },
+                { name: 'Krabi Sunset Hotel', location: 'กระบี่', price: 2100, type: 'hotel', icon: '🌅' }
+            ];
+            
+            // Search flights
+            const flights = [
+                { route: 'กรุงเทพฯ - ภูเก็ต', price: 2500, type: 'flight', icon: '✈️', from: 'BKK', to: 'HKT' },
+                { route: 'กรุงเทพฯ - เชียงใหม่', price: 1800, type: 'flight', icon: '✈️', from: 'BKK', to: 'CNX' },
+                { route: 'กรุงเทพฯ - กระบี่', price: 2200, type: 'flight', icon: '✈️', from: 'BKK', to: 'KBV' },
+                { route: 'ภูเก็ต - กรุงเทพฯ', price: 2400, type: 'flight', icon: '✈️', from: 'HKT', to: 'BKK' }
+            ];
+            
+            // Filter hotels
+            hotels.forEach(hotel => {
+                if (hotel.name.toLowerCase().includes(lowerQuery) || 
+                    hotel.location.toLowerCase().includes(lowerQuery)) {
+                    results.push(hotel);
+                }
+            });
+            
+            // Filter flights
+            flights.forEach(flight => {
+                if (flight.route.toLowerCase().includes(lowerQuery)) {
+                    results.push(flight);
+                }
+            });
+            
+            // Display results
+            if (results.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="text-center text-gray-400 py-8">
+                        <span class="text-4xl mb-4 block">🔍</span>
+                        <p>ไม่พบผลการค้นหา</p>
+                        <p class="text-sm">ลองค้นหาด้วยคำอื่น</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            resultsContainer.innerHTML = results.map(item => {
+                if (item.type === 'hotel') {
+                    return `
+                        <div class="hotel-card bg-gray-700 rounded-2xl p-4 card-shadow">
+                            <div class="flex gap-4">
+                                <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center">
+                                    <span class="text-3xl">${item.icon}</span>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <h3 class="text-white font-semibold text-sm">${item.name}</h3>
+                                        <button class="bookmark-heart text-gray-400 text-lg" onclick="toggleBookmark(this, '${item.name}')">♡</button>
+                                    </div>
+                                    <p class="text-gray-300 text-xs mb-2">${item.location}</p>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div class="flex text-yellow-400 text-xs">★★★★★</div>
+                                        <span class="text-gray-300 text-xs">(4.8)</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-yellow-400 font-semibold">฿${item.price.toLocaleString()}</span>
+                                        <button class="bg-yellow-400 text-gray-900 px-3 py-1 rounded-lg text-xs font-semibold hover:bg-yellow-300 transition-colors" onclick="goToReviewPage('${item.name}')">จอง</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="hotel-card bg-gray-700 rounded-2xl p-4 card-shadow">
+                            <div class="flex gap-4">
+                                <div class="w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center">
+                                    <span class="text-3xl">${item.icon}</span>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <h3 class="text-white font-semibold text-sm">${item.route}</h3>
+                                        <button class="bookmark-heart text-gray-400 text-lg" onclick="toggleBookmark(this, '${item.route}')">♡</button>
+                                    </div>
+                                    <p class="text-gray-300 text-xs mb-2">เที่ยวบินภายในประเทศ</p>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="text-gray-300 text-xs">เวลาบิน: 1.5 ชม.</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-yellow-400 font-semibold">฿${item.price.toLocaleString()}</span>
+                                        <button class="bg-yellow-400 text-gray-900 px-3 py-1 rounded-lg text-xs font-semibold hover:bg-yellow-300 transition-colors" onclick="bookFlight('${item.from}', '${item.to}', ${item.price})">จอง</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+            
+            // Update notification badges after search
+            updateBookingsBadge();
+            updateFavoritesBadge();
+        }
+        
+        function bookFlight(from, to, price) {
+            if (!isLoggedIn) {
+                showLogin();
+                return;
+            }
+            
+            const booking = {
+                id: Date.now(),
+                type: 'flight',
+                from: from,
+                to: to,
+                price: price,
+                status: 'confirmed'
+            };
+            bookings.push(booking);
+            updateBookingsBadge();
+            
+            alert(`จองเที่ยวบิน ${from} → ${to} สำเร็จ! ราคา ฿${price.toLocaleString()}`);
+        }
+
+        // Chat functions
+        function openChat() {
+            document.getElementById('chatModal').classList.add('active');
+        }
+
+        function closeChat() {
+            document.getElementById('chatModal').classList.remove('active');
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (message) {
+                alert(`ส่งข้อความ: ${message}`);
+                input.value = '';
+            }
+        }
+
+        // Discount codes functions
+        function showDiscountCodes() {
+            if (!isLoggedIn) {
+                showLogin();
+                return;
+            }
+            document.getElementById('discountModal').classList.add('active');
+        }
+
+        function closeDiscountCodes() {
+            document.getElementById('discountModal').classList.remove('active');
+        }
+
+        function collectDiscountCode() {
+            alert('เก็บโค้ดส่วนลดเรียบร้อย! 🎫');
+            closeDiscountCodes();
+        }
+
+        // Points and membership functions
+        function showPoints() {
+            if (!isLoggedIn) {
+                showLogin();
+                return;
+            }
+            document.getElementById('pointsModal').classList.add('active');
+        }
+
+        function closePointsModal() {
+            document.getElementById('pointsModal').classList.remove('active');
+        }
+
+        function earnMorePoints() {
+            if (!isLoggedIn) {
+                showLogin();
+                return;
+            }
+            closePointsModal();
+            showPage('pointsEarning');
+        }
+        
+        function refreshCaptcha() {
+            currentCaptchaIndex = (currentCaptchaIndex + 1) % captchaImages.length;
+            const captcha = captchaImages[currentCaptchaIndex];
+            document.getElementById('captchaImage').src = captcha.url;
+            currentCaptchaAnswer = captcha.answer;
+            document.getElementById('captchaInput').value = '';
+        }
+        
+        function submitCaptcha() {
+            const userAnswer = document.getElementById('captchaInput').value.trim().toUpperCase();
+            
+            if (!userAnswer) {
+                showPointsNotification(false, 'กรุณากรอกคำตอบ', '❌');
+                return;
+            }
+            
+            if (userAnswer === currentCaptchaAnswer) {
+                // Correct answer - add points
+                userPoints += 1;
+                document.getElementById('currentPoints').textContent = userPoints.toLocaleString() + ' แต้ม';
+                document.getElementById('currentPointsDisplay').textContent = userPoints.toLocaleString() + ' แต้ม';
+                
+                showPointsNotification(true, 'คุณได้รับ +1 แต้ม', '⭐');
+                
+                // Refresh CAPTCHA for next attempt
+                refreshCaptcha();
+            } else {
+                // Wrong answer - no points
+                showPointsNotification(false, 'คำตอบไม่ถูกต้อง ไม่ได้แต้ม', '❌');
+                document.getElementById('captchaInput').value = '';
+            }
+        }
+        
+        function showPointsNotification(success, message, icon) {
+            document.getElementById('pointsNotificationIcon').textContent = icon;
+            document.getElementById('pointsNotificationTitle').textContent = success ? 'ได้รับแต้ม!' : 'ไม่ได้แต้ม';
+            document.getElementById('pointsNotificationMessage').textContent = message;
+            document.getElementById('pointsNotificationTotal').textContent = `รวม: ${userPoints.toLocaleString()} แต้ม`;
+            
+            document.getElementById('pointsNotificationModal').classList.add('active');
+        }
+        
+        function closePointsNotification() {
+            document.getElementById('pointsNotificationModal').classList.remove('active');
+        }
+
+        function showMembership() {
+            if (!isLoggedIn) {
+                showLogin();
+                return;
+            }
+            document.getElementById('vipModal').classList.add('active');
+        }
+
+        function closeVipModal() {
+            document.getElementById('vipModal').classList.remove('active');
+        }
+
+        function startVipTrial() {
+            alert('เริ่มทดลองใช้ VIP ฟรี 7 วัน! 👑');
+            membershipLevel = 'VIP';
+            document.getElementById('membershipLevel').textContent = 'VIP';
+            document.getElementById('membershipDisplay').textContent = 'สมาชิก VIP';
+            closeVipModal();
+        }
+
+        function upgradeMembership() {
+            showMembership();
+        }
+
+        // Login/Register functions
+        function showLogin() {
+            document.getElementById('registerModal').classList.remove('active');
+            document.getElementById('loginModal').classList.add('active');
+        }
+
+        function closeLogin() {
+            document.getElementById('loginModal').classList.remove('active');
+        }
+
+        function showRegister() {
+            document.getElementById('loginModal').classList.remove('active');
+            document.getElementById('registerModal').classList.add('active');
+        }
+
+        function closeRegister() {
+            document.getElementById('registerModal').classList.remove('active');
+        }
+
+        function login() {
+            isLoggedIn = true;
+            membershipLevel = 'Member';
+            closeLogin();
+            showPage('home');
+            alert('เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ 🎉');
+        }
+
+        function register() {
+            isLoggedIn = true;
+            membershipLevel = 'Member';
+            closeRegister();
+            showPage('home');
+            alert('สมัครสมาชิกสำเร็จ! ยินดีต้อนรับสู่ GoGoTrip 🎉');
+        }
+
+        function loginWithGoogle() {
+            isLoggedIn = true;
+            membershipLevel = 'Member';
+            closeLogin();
+            showPage('home');
+            alert('เข้าสู่ระบบด้วย Google สำเร็จ! 🔍');
+        }
+
+        function loginWithFacebook() {
+            isLoggedIn = true;
+            membershipLevel = 'Member';
+            closeLogin();
+            showPage('home');
+            alert('เข้าสู่ระบบด้วย Facebook สำเร็จ! 📘');
+        }
+
+        function registerWithGoogle() {
+            isLoggedIn = true;
+            membershipLevel = 'Member';
+            closeRegister();
+            showPage('home');
+            alert('สมัครสมาชิกด้วย Google สำเร็จ! 🔍');
+        }
+
+        function registerWithFacebook() {
+            isLoggedIn = true;
+            membershipLevel = 'Member';
+            closeRegister();
+            showPage('home');
+            alert('สมัครสมาชิกด้วย Facebook สำเร็จ! 📘');
+        }
+
+        function forgotPassword() {
+            alert('ระบบจะส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณ 📧');
+        }
+
+        function logout() {
+            if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
+                isLoggedIn = false;
+                favoriteItems = [];
+                bookings = [];
+                membershipLevel = 'Member';
+                showLogin();
+                alert('ออกจากระบบเรียบร้อย');
+            }
+        }
+
+        // Booking functions
+        function openFlightBooking() {
+            if (!isLoggedIn) {
+                showLogin();
+                return;
+            }
+            document.getElementById('flightModal').classList.add('active');
+        }
+
+        function closeFlightModal() {
+            document.getElementById('flightModal').classList.remove('active');
+        }
+
+        function selectTripType(type) {
+            // Update button styles
+            document.querySelectorAll('#flightModal .grid button').forEach(btn => {
+                btn.classList.remove('bg-yellow-400', 'text-gray-900');
+                btn.classList.add('bg-gray-700', 'text-white');
+            });
+            event.target.classList.add('bg-yellow-400', 'text-gray-900');
+            event.target.classList.remove('bg-gray-700', 'text-white');
+        }
+
+        function searchFlights() {
+            const from = document.getElementById('fromAirport').value;
+            const to = document.getElementById('toAirport').value;
+            const date = document.getElementById('departureDate').value;
+            
+            if (!from || !to || !date) {
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+            
+            // Add to bookings
+            const booking = {
+                id: Date.now(),
+                type: 'flight',
+                from: from,
+                to: to,
+                date: date,
+                status: 'confirmed'
+            };
+            bookings.push(booking);
+            updateBookingsBadge();
+            
+            alert(`ค้นหาเที่ยวบิน ${from} → ${to} วันที่ ${date} สำเร็จ!`);
+            closeFlightModal();
+        }
+
+        function bookHotel() {
+            if (!isLoggedIn) {
+                showLogin();
+                return;
+            }
+            document.getElementById('hotelModal').classList.add('active');
+        }
+
+        function closeHotelModal() {
+            document.getElementById('hotelModal').classList.remove('active');
+        }
+
+        function searchHotels() {
+            const location = document.getElementById('hotelLocation').value;
+            const checkin = document.getElementById('checkinDate').value;
+            const checkout = document.getElementById('checkoutDate').value;
+            
+            if (!location || !checkin || !checkout) {
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+            
+            // Close hotel modal and show search results
+            closeHotelModal();
+            
+            // Set search query based on location
+            const locationNames = {
+                'bangkok': 'กรุงเทพฯ',
+                'chiangmai': 'เชียงใหม่',
+                'phuket': 'ภูเก็ต',
+                'krabi': 'กระบี่',
+                'pattaya': 'พัทยา'
+            };
+            
+            const searchQuery = locationNames[location] || location;
+            document.getElementById('searchQuery').textContent = `ค้นหาที่พัก: ${searchQuery} (${checkin} - ${checkout})`;
+            
+            // Show hotel search results
+            showHotelSearchResults(location, checkin, checkout);
+            showPage('searchResults');
+        }
+        
+        function showHotelSearchResults(location, checkin, checkout) {
+            const resultsContainer = document.getElementById('searchResults');
+            
+            // Hotel database based on location
+            const hotelsByLocation = {
+                'bangkok': [
+                    { name: 'Bangkok Luxury Hotel', price: 4800, icon: '🏙️', rating: 4.9 },
+                    { name: 'Siam Grand Hotel', price: 3200, icon: '🏨', rating: 4.7 },
+                    { name: 'Riverside Resort Bangkok', price: 2800, icon: '🌊', rating: 4.5 },
+                    { name: 'Bangkok City Center', price: 2200, icon: '🏢', rating: 4.3 }
+                ],
+                'chiangmai': [
+                    { name: 'Mountain View Resort', price: 2200, icon: '🏔️', rating: 4.5 },
+                    { name: 'Chiang Mai Garden Hotel', price: 1800, icon: '🌺', rating: 4.4 },
+                    { name: 'Northern Hills Resort', price: 2600, icon: '⛰️', rating: 4.6 },
+                    { name: 'Old City Boutique Hotel', price: 1500, icon: '🏛️', rating: 4.2 }
+                ],
+                'phuket': [
+                    { name: 'Centara Grand Beach Resort', price: 3500, icon: '🏖️', rating: 4.8 },
+                    { name: 'Phuket Beach Resort', price: 2800, icon: '🌴', rating: 4.6 },
+                    { name: 'Sunset Villa Phuket', price: 4200, icon: '🌅', rating: 4.7 },
+                    { name: 'Patong Bay Hotel', price: 2100, icon: '🏄', rating: 4.3 }
+                ],
+                'krabi': [
+                    { name: 'Krabi Sunset Hotel', price: 2100, icon: '🌅', rating: 4.4 },
+                    { name: 'Railay Beach Resort', price: 3800, icon: '🏖️', rating: 4.8 },
+                    { name: 'Ao Nang Paradise', price: 2500, icon: '🌊', rating: 4.5 },
+                    { name: 'Limestone Cliffs Hotel', price: 1900, icon: '⛰️', rating: 4.2 }
+                ],
+                'pattaya': [
+                    { name: 'Pattaya Beach Hotel', price: 2400, icon: '🏖️', rating: 4.4 },
+                    { name: 'Central Pattaya Resort', price: 1800, icon: '🏨', rating: 4.2 },
+                    { name: 'Jomtien Tower Hotel', price: 2800, icon: '🏢', rating: 4.6 },
+                    { name: 'Walking Street Hotel', price: 2200, icon: '🌃', rating: 4.3 }
+                ]
+            };
+            
+            const hotels = hotelsByLocation[location] || [];
+            
+            if (hotels.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="text-center text-gray-400 py-8">
+                        <span class="text-4xl mb-4 block">🏨</span>
+                        <p>ไม่พบโรงแรมในพื้นที่นี้</p>
+                        <p class="text-sm">ลองเลือกจังหวัดอื่น</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            resultsContainer.innerHTML = hotels.map(hotel => `
+                <div class="hotel-card bg-gray-700 rounded-2xl p-4 card-shadow">
+                    <div class="flex gap-4">
+                        <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center">
+                            <span class="text-3xl">${hotel.icon}</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start mb-1">
+                                <h3 class="text-white font-semibold text-sm">${hotel.name}</h3>
+                                <button class="bookmark-heart text-gray-400 text-lg" onclick="toggleBookmark(this, '${hotel.name}')">♡</button>
+                            </div>
+                            <p class="text-gray-300 text-xs mb-2">${checkin} - ${checkout}</p>
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="flex text-yellow-400 text-xs">★★★★${hotel.rating >= 4.5 ? '★' : '☆'}</div>
+                                <span class="text-gray-300 text-xs">(${hotel.rating})</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-yellow-400 font-semibold">฿${hotel.price.toLocaleString()}</span>
+                                <button class="bg-yellow-400 text-gray-900 px-3 py-1 rounded-lg text-xs font-semibold hover:bg-yellow-300 transition-colors" onclick="goToReviewPage('${hotel.name}')">จอง</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function bookHotelRoom(hotelName) {
+            if (!isLoggedIn) {
+                showLogin();
+                return;
+            }
+            currentHotelBooking = { name: hotelName };
+            document.getElementById('roomModal').classList.add('active');
+        }
+        
+        function closeRoomModal() {
+            document.getElementById('roomModal').classList.remove('active');
+        }
+        
+        function selectRoom(roomType, price) {
+            currentHotelBooking.roomType = roomType;
+            currentHotelBooking.price = price;
+            closeRoomModal();
+            showPaymentModal();
+        }
+        
+        function showPaymentModal() {
+            // Reset discount states
+            appliedDiscountCode = null;
+            appliedPointsDiscount = 0;
+            selectedPaymentMethod = null;
+            insuranceSelected = false;
+            insurancePrice = 0;
+            
+            // Update booking summary
+            document.getElementById('bookingTitle').textContent = currentHotelBooking.name;
+            document.getElementById('bookingDetails').textContent = `ประเภทห้อง: ${currentHotelBooking.roomType}`;
+            document.getElementById('bookingQuantity').textContent = 'x1';
+            document.getElementById('bookingPrice').textContent = `฿${currentHotelBooking.price.toLocaleString()}`;
+            
+            // Calculate and display insurance price (20% of booking price)
+            insurancePrice = Math.floor(currentHotelBooking.price * 0.2);
+            document.getElementById('insurancePrice').textContent = `+฿${insurancePrice.toLocaleString()}`;
+            
+            // Update price summary
+            updatePriceSummary();
+            
+            // Clear form inputs
+            document.getElementById('discountCode').value = '';
+            document.getElementById('pointsToUse').value = '';
+            document.getElementById('termsAccepted').checked = false;
+            document.getElementById('insuranceCheckbox').checked = false;
+            
+            // Reset payment method buttons
+            document.querySelectorAll('.payment-method').forEach(btn => {
+                btn.classList.remove('bg-yellow-400', 'text-gray-900');
+                btn.classList.add('bg-gray-600', 'text-white');
+            });
+            
+            document.getElementById('paymentModal').classList.add('active');
+        }
+        
+        function toggleInsurance() {
+            insuranceSelected = document.getElementById('insuranceCheckbox').checked;
+            updatePriceSummary();
+        }
+        
+        function updatePriceSummary() {
+            const basePrice = currentHotelBooking.price;
+            let discountAmount = 0;
+            let pointsDiscountAmount = appliedPointsDiscount;
+            let totalInsurancePrice = insuranceSelected ? insurancePrice : 0;
+            
+            if (appliedDiscountCode) {
+                const validCodes = {
+                    'HOTEL50': 0.5,
+                    'FLIGHT20': 0.2,
+                    'NEWUSER30': 0.3,
+                    'WEEKEND15': 0.15
+                };
+                
+                if (validCodes[appliedDiscountCode]) {
+                    discountAmount = Math.floor(basePrice * validCodes[appliedDiscountCode]);
+                }
+            }
+            
+            const finalPrice = Math.max(0, basePrice + totalInsurancePrice - discountAmount - pointsDiscountAmount);
+            
+            // Update display
+            document.getElementById('subtotalPrice').textContent = `฿${basePrice.toLocaleString()}`;
+            document.getElementById('finalAmount').textContent = `฿${finalPrice.toLocaleString()}`;
+            document.getElementById('paymentButtonAmount').textContent = `฿${finalPrice.toLocaleString()}`;
+            
+            // Show/hide insurance row
+            if (insuranceSelected) {
+                document.getElementById('insuranceRow').style.display = 'flex';
+                document.getElementById('insuranceAmount').textContent = `+฿${totalInsurancePrice.toLocaleString()}`;
+            } else {
+                document.getElementById('insuranceRow').style.display = 'none';
+            }
+            
+            // Show/hide discount rows
+            if (discountAmount > 0) {
+                document.getElementById('codeDiscountRow').style.display = 'flex';
+                document.getElementById('codeDiscountAmount').textContent = `-฿${discountAmount.toLocaleString()}`;
+            } else {
+                document.getElementById('codeDiscountRow').style.display = 'none';
+            }
+            
+            if (pointsDiscountAmount > 0) {
+                document.getElementById('pointsDiscountRow').style.display = 'flex';
+                document.getElementById('pointsDiscountAmount').textContent = `-฿${pointsDiscountAmount.toLocaleString()}`;
+            } else {
+                document.getElementById('pointsDiscountRow').style.display = 'none';
+            }
+        }
+        
+        function selectDiscountCode(code) {
+            document.getElementById('discountCode').value = code;
+            applyDiscountCode();
+        }
+        
+        function applyDiscountCode() {
+            const code = document.getElementById('discountCode').value.trim().toUpperCase();
+            
+            if (!code) {
+                alert('กรุณากรอกโค้ดส่วนลด');
+                return;
+            }
+            
+            const validCodes = {
+                'HOTEL50': { discount: 0.5, description: 'ลด 50% สำหรับการจองโรงแรม' },
+                'FLIGHT20': { discount: 0.2, description: 'ลด 20% สำหรับตั๋วเที่ยวบิน' },
+                'NEWUSER30': { discount: 0.3, description: 'ลด 30% สำหรับสมาชิกใหม่' },
+                'WEEKEND15': { discount: 0.15, description: 'ลด 15% สำหรับการจองวันหยุด' }
+            };
+            
+            if (validCodes[code]) {
+                appliedDiscountCode = code;
+                updatePriceSummary();
+                alert(`ใช้โค้ด ${code} สำเร็จ! 🎫\n${validCodes[code].description}`);
+            } else {
+                alert('โค้ดส่วนลดไม่ถูกต้องหรือหมดอายุแล้ว');
+            }
+        }
+        
+        function applyPoints() {
+            const points = parseInt(document.getElementById('pointsToUse').value) || 0;
+            
+            if (points <= 0) {
+                alert('กรุณากรอกจำนวนแต้มที่ต้องการใช้');
+                return;
+            }
+            
+            if (points > userPoints) {
+                alert(`คุณมีแต้มเพียง ${userPoints.toLocaleString()} แต้ม`);
+                return;
+            }
+            
+            if (points > currentHotelBooking.price) {
+                alert(`ไม่สามารถใช้แต้มเกินราคาสินค้าได้`);
+                return;
+            }
+            
+            appliedPointsDiscount = points;
+            updatePriceSummary();
+            alert(`ใช้ ${points.toLocaleString()} แต้ม สำเร็จ! ⭐`);
+        }
+        
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('active');
+        }
+        
+        function selectPaymentMethod(method) {
+            selectedPaymentMethod = method;
+            
+            // Reset all buttons
+            document.querySelectorAll('.payment-method').forEach(btn => {
+                btn.classList.remove('bg-yellow-400', 'text-gray-900');
+                btn.classList.add('bg-gray-600', 'text-white');
+            });
+            
+            // Highlight selected method
+            event.target.classList.add('bg-yellow-400', 'text-gray-900');
+            event.target.classList.remove('bg-gray-600', 'text-white');
+        }
+        
+        function processPayment() {
+            if (!selectedPaymentMethod) {
+                alert('กรุณาเลือกวิธีการชำระเงิน');
+                return;
+            }
+            
+            if (!document.getElementById('termsAccepted').checked) {
+                alert('กรุณายอมรับเงื่อนไขการใช้บริการ');
+                return;
+            }
+            
+            // Calculate final price
+            const basePrice = currentHotelBooking.price;
+            let discountAmount = 0;
+            let totalInsurancePrice = insuranceSelected ? insurancePrice : 0;
+            
+            if (appliedDiscountCode) {
+                const validCodes = {
+                    'HOTEL50': 0.5,
+                    'FLIGHT20': 0.2,
+                    'NEWUSER30': 0.3,
+                    'WEEKEND15': 0.15
+                };
+                
+                if (validCodes[appliedDiscountCode]) {
+                    discountAmount = Math.floor(basePrice * validCodes[appliedDiscountCode]);
+                }
+            }
+            
+            const finalPrice = Math.max(0, basePrice + totalInsurancePrice - discountAmount - appliedPointsDiscount);
+            
+            // Deduct points if used
+            if (appliedPointsDiscount > 0) {
+                userPoints -= appliedPointsDiscount;
+                document.getElementById('currentPoints').textContent = userPoints.toLocaleString() + ' แต้ม';
+                document.getElementById('currentPointsDisplay').textContent = userPoints.toLocaleString() + ' แต้ม';
+            }
+            
+            if (selectedPaymentMethod === 'promptpay') {
+                // Show QR Code for PromptPay
+                document.getElementById('qrAmount').textContent = `฿${finalPrice.toLocaleString()}`;
+                closePaymentModal();
+                document.getElementById('qrModal').classList.add('active');
+                return;
+            }
+            
+            // Process other payment methods
+            const booking = {
+                id: Date.now(),
+                type: 'hotel',
+                name: currentHotelBooking.name,
+                roomType: currentHotelBooking.roomType,
+                originalPrice: basePrice,
+                finalPrice: finalPrice,
+                discountCode: appliedDiscountCode,
+                pointsUsed: appliedPointsDiscount,
+                insuranceIncluded: insuranceSelected,
+                insurancePrice: totalInsurancePrice,
+                paymentMethod: selectedPaymentMethod,
+                status: 'confirmed'
+            };
+            bookings.push(booking);
+            updateBookingsBadge();
+            
+            closePaymentModal();
+            alert(`ชำระเงินสำเร็จ! จองห้องพัก ${currentHotelBooking.name} เรียบร้อย 🏨\nยอดชำระ: ฿${finalPrice.toLocaleString()}`);
+        }
+        
+        function closeQRModal() {
+            document.getElementById('qrModal').classList.remove('active');
+        }
+        
+        function confirmQRPayment() {
+            const basePrice = currentHotelBooking.price;
+            let discountAmount = 0;
+            let totalInsurancePrice = insuranceSelected ? insurancePrice : 0;
+            
+            if (appliedDiscountCode) {
+                const validCodes = {
+                    'HOTEL50': 0.5,
+                    'FLIGHT20': 0.2,
+                    'NEWUSER30': 0.3,
+                    'WEEKEND15': 0.15
+                };
+                
+                if (validCodes[appliedDiscountCode]) {
+                    discountAmount = Math.floor(basePrice * validCodes[appliedDiscountCode]);
+                }
+            }
+            
+            const finalPrice = Math.max(0, basePrice + totalInsurancePrice - discountAmount - appliedPointsDiscount);
+            
+            const booking = {
+                id: Date.now(),
+                type: 'hotel',
+                name: currentHotelBooking.name,
+                roomType: currentHotelBooking.roomType,
+                originalPrice: basePrice,
+                finalPrice: finalPrice,
+                discountCode: appliedDiscountCode,
+                pointsUsed: appliedPointsDiscount,
+                insuranceIncluded: insuranceSelected,
+                insurancePrice: totalInsurancePrice,
+                paymentMethod: 'promptpay',
+                status: 'confirmed'
+            };
+            bookings.push(booking);
+            updateBookingsBadge();
+            
+            closeQRModal();
+            alert(`ชำระเงินผ่าน QR Code สำเร็จ! 🏨\nยอดชำระ: ฿${finalPrice.toLocaleString()}`);
+        }
+
+        function bookLocalGuide() {
+            if (!isLoggedIn) {
+                showLogin();
+                return;
+            }
+            alert('เปิดหน้าจอง Local Guide 👨‍🏫');
+        }
+
+        function rentCar() {
+            if (!isLoggedIn) {
+                showLogin();
+                return;
+            }
+            alert('เปิดหน้าเช่ารถ 🚗');
+        }
+
+        function bookTransfer() {
+            if (!isLoggedIn) {
+                showLogin();
+                return;
+            }
+            alert('เปิดหน้ารถรับส่ง 🚐');
+        }
+
+        function bookBoat() {
+            if (!isLoggedIn) {
+                showLogin();
+                return;
+            }
+            alert('เปิดหน้าจองล่องเรือ ⛵');
+        }
+
+        function digitalGuide() {
+            if (!isLoggedIn) {
+                showLogin();
+                return;
+            }
+            alert('เปิด Digital Guide 📱');
+        }
+
+        function showMore() {
+            alert('บริการอื่นๆ กำลังพัฒนา... 🔧');
+        }
+
+        // Favorites functions
+        function toggleBookmark(element, itemName) {
+            if (!isLoggedIn) {
+                showLogin();
+                return;
+            }
+
+            const isFavorited = favoriteItems.includes(itemName);
+
+            if (isFavorited) {
+                // ลบออกจากรายการโปรด
+                favoriteItems = favoriteItems.filter(item => item !== itemName);
+                showNotification(`ลบ ${itemName} ออกจากรายการโปรด 💔`, 'error');
+            } else {
+                // เพิ่มเข้าไปในรายการโปรด
+                favoriteItems.push(itemName);
+                showNotification(`เพิ่ม ${itemName} ในรายการโปรด ❤️`, 'success');
+            }
+
+            // อัปเดตหน้าจอ
+            renderFavorites();
+            updateFavoritesBadge();
+
+            // อัปเดตสถานะปุ่ม ถ้ามี element (เช่นกดจากหน้าหลัก)
+            if (element) {
+                if (isFavorited) {
+                    element.textContent = '♡';
+                    element.classList.remove('active');
+                } else {
+                    element.textContent = '♥';
+                    element.classList.add('active');
+                }
+            }
+        }
+
+
+
+        function renderFavorites() {
+            const list = document.getElementById('favoritesList');
+            list.innerHTML = '';
+
+            if (favoriteItems.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center text-gray-400 py-8">
+                        <span class="text-4xl mb-4 block">❤️</span>
+                        <p>ยังไม่มีรายการโปรด</p>
+                        <p class="text-sm">กดหัวใจที่โรงแรมหรือบริการที่ชอบ</p>
+                    </div>
+                `;
+                return;
+            }
+
+            favoriteItems.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between bg-white p-4 rounded-xl shadow';
+
+                // เช็คว่า item นี้ยังอยู่ใน favorite หรือไม่
+                const isFavorited = favoriteItems.includes(item);
+                const heartClass = isFavorited ? 'active' : '';
+                const heartSymbol = isFavorited ? '♥' : '♡';
+
+                div.innerHTML = `
+                    <span class="text-gray-800 font-medium">${item}</span>
+                    <button class="text-red-500 text-xl ${heartClass}">${heartSymbol}</button>
+                `;
+
+                const btn = div.querySelector('button');
+                btn.addEventListener('click', () => {
+                    toggleBookmark(btn, item);
+                });
+
+                list.appendChild(div);
+            });
+        }
+
+
+
+
+
+
+        function viewAllHotels() {
+            alert('แสดงโรงแรมทั้งหมด 🏨');
+        }
+
+        // Profile functions
+        function editProfile() {
+            alert('เปิดหน้าแก้ไขโปรไฟล์ ✏️');
+        }
+
+        function showSettings() {
+            alert('เปิดหน้าการตั้งค่า ⚙️');
+        }
+
+        function showHelp() {
+            alert('เปิดหน้าช่วยเหลือ ❓');
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            showPage('home');
+        });
+        function searchFlights() {
+    const from = document.getElementById('fromAirport').value;
+    const to = document.getElementById('toAirport').value;
+    const date = document.getElementById('departureDate').value;
+
+    if (!from || !to || !date) {
+        alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+        return;
+    }
+
+    const flights = [
+        { airline: 'Thai Airways', time: '10:00 - 11:30', price: 1800 },
+        { airline: 'AirAsia', time: '13:00 - 14:30', price: 1500 },
+        { airline: 'Bangkok Airways', time: '18:00 - 19:20', price: 2000 }
+    ];
+
+    let html = '';
+    flights.forEach(flight => {
+        html += `
+        <div class="bg-gray-700 rounded-xl p-4 text-white">
+            <h4 class="text-lg font-semibold">${flight.airline}</h4>
+            <p class="text-sm text-gray-300">${from} → ${to} (${date})<br>เวลา: ${flight.time}</p>
+            <div class="flex justify-between items-center mt-3">
+                <span class="text-yellow-400 font-bold">฿${flight.price}</span>
+                <button class="bg-yellow-400 text-gray-900 font-semibold px-4 py-2 rounded-xl hover:bg-yellow-300" onclick="selectFlight('${flight.airline}', '${flight.time}', ${flight.price})">เลือก</button>
+            </div>
+        </div>
+        `;
+    });
+
+    document.getElementById('flightResultsContent').innerHTML = html;
+    document.getElementById('flightResultsModal').classList.add('active');
+}
+
+function closeFlightResultsModal() {
+    document.getElementById('flightResultsModal').classList.remove('active');
+}
+
+function selectFlight(airline, time, price) {
+    closeFlightResultsModal();
+
+    // กำหนดข้อมูลเที่ยวบินลงใน Payment Modal
+    document.getElementById('bookingIcon').textContent = '✈️';
+    document.getElementById('bookingTitle').textContent = airline;
+    document.getElementById('bookingDetails').textContent = `เวลาเดินทาง: ${time}`;
+    document.getElementById('bookingQuantity').textContent = '1 เที่ยวบิน';
+    document.getElementById('bookingPrice').textContent = `฿${price}`;
+
+    // เก็บราคาไว้เพื่อคำนวณส่วนลด
+    currentHotelBooking = {
+        type: 'flight',
+        name: airline,
+        time: time,
+        price: price
+    };
+
+    // อัปเดตยอดราคาชำระ
+    updatePaymentSummary();
+
+    // เปิดหน้า modal ชำระเงิน
+    document.getElementById('paymentModal').classList.add('active');
+}
+    function updatePaymentSummary() {
+    let price = currentHotelBooking.price;
+    let insurance = insuranceSelected ? insurancePrice : 0;
+    let discount = appliedDiscountCode ? price * 0.2 : 0; // ตัวอย่างลด 20%
+    let pointsDiscount = appliedPointsDiscount;
+
+    let final = price + insurance - discount - pointsDiscount;
+
+    document.getElementById('subtotalPrice').textContent = `฿${price}`;
+    document.getElementById('finalAmount').textContent = `฿${final}`;
+    document.getElementById('paymentButtonAmount').textContent = `฿${final}`;
+
+    // toggle row visibility
+    document.getElementById('insuranceRow').style.display = insurance > 0 ? 'flex' : 'none';
+    document.getElementById('codeDiscountRow').style.display = discount > 0 ? 'flex' : 'none';
+    document.getElementById('pointsDiscountRow').style.display = pointsDiscount > 0 ? 'flex' : 'none';
+
+    // update amount in other parts too
+    document.getElementById('insuranceAmount').textContent = `+฿${insurance}`;
+    document.getElementById('codeDiscountAmount').textContent = `-฿${discount}`;
+    document.getElementById('pointsDiscountAmount').textContent = `-฿${pointsDiscount}`;
+}
+
+function renderFavorites() {
+    const container = document.getElementById('favoritesList');
+    const emptyBox = document.getElementById('emptyFavorites');
+
+    // ล้างรายการเดิม (ยกเว้น emptyFavorites)
+    const favoriteCards = container.querySelectorAll('.favorite-card');
+    favoriteCards.forEach(card => card.remove());
+
+    if (favoriteItems.length === 0) {
+        emptyBox.classList.remove('hidden');
+        return;
+    }
+
+    emptyBox.classList.add('hidden');
+
+    favoriteItems.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'bg-gray-800 rounded-xl p-4 favorite-card';
+
+        card.innerHTML = `
+            <div class="flex gap-4 items-start">
+                <div class="w-16 h-16 bg-yellow-400 text-black rounded-xl flex items-center justify-center text-2xl">🏨</div>
+                <div class="flex-1">
+                    <div class="flex justify-between items-start">
+                        <h3 class="text-white font-medium">${item}</h3>
+                        <button class="text-red-500 text-xl" onclick="toggleBookmark(this, '${item}')">♥</button>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-1">เพิ่มไว้ในรายการโปรดแล้ว</p>
+                    <div class="mt-2 text-right">
+                        <button class="bg-yellow-400 text-gray-900 px-4 py-1 rounded-lg text-sm font-semibold hover:bg-yellow-300 transition-colors">จองเลย</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(card);
+    });
+}
+
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'965c11dac4557336',t:'MTc1MzYxODYwNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+    <!-- Flight Results Modal -->
+    <div id="flightResultsModal" class="modal">
+    <div class="bg-gray-800 w-full max-w-md mx-auto my-auto rounded-2xl slide-up p-6 overflow-y-auto max-h-[90vh]">
+        <div class="yellow-gradient text-white p-4 rounded-t-2xl flex justify-between items-center">
+        <h3 class="font-semibold">เที่ยวบินที่ค้นพบ</h3>
+        <button onclick="closeFlightResultsModal()" class="text-white text-xl">✕</button>
+        </div>
+        <div id="flightResultsContent" class="space-y-4 py-4"></div>
+    </div>
+    </div>
+    <!-- Notification Bar -->
+    <div id="notificationBar" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white text-sm px-6 py-3 rounded-full shadow-lg hidden z-50"></div>
+
+    <script>
+    function showNotification(message, type = 'info') {
+        const bar = document.getElementById('notificationBar');
+        bar.textContent = message;
+
+        bar.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'bg-yellow-500');
+
+        if (type === 'success') {
+            bar.classList.add('bg-green-500');
+        } else if (type === 'error') {
+            bar.classList.add('bg-red-500');
+        } else {
+            bar.classList.add('bg-yellow-500');
+        }
+
+        setTimeout(() => {
+            bar.classList.add('hidden');
+        }, 3000);
+    }
+    </script>
+    
+    <script>
+    function showRoomSizeModal() {
+        document.getElementById("roomSizeModal").classList.remove("hidden");
+        document.getElementById("roomSizeModal").classList.add("flex");
+    }
+
+    function closeRoomSizeModal() {
+        document.getElementById("roomSizeModal").classList.add("hidden");
+        document.getElementById("roomSizeModal").classList.remove("flex");
+    }
+    </script>
+
+    <script>
+        function goToReviewPage() {
+            document.getElementById('homePage').classList.add('hidden');
+            document.getElementById('reviewPage').classList.remove('hidden');
+        }
+    </script>
+
+</body>
+
+</html>
