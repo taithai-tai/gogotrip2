@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Digital Guide - Navigation Team</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Kanit', sans-serif;
+            overflow-x: hidden;
+        }
+        
+        .chat-container {
+            height: calc(100vh - 180px);
+            padding-bottom: 80px;
+        }
+        
+        .message-bubble {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .typing-indicator {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body class="bg-black text-yellow-400 min-h-screen">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-yellow-500 to-yellow-400 text-black p-3 shadow-lg sticky top-0 z-50">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-black rounded-full flex items-center justify-center">
+                    <span class="text-yellow-400 font-bold text-sm">🧭</span>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold">Digital Guide</h1>
+                    <p class="text-xs opacity-80">Navigation Team</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-1">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span class="text-xs font-medium">Online</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Container -->
+    <div class="p-2">
+        <div id="chatContainer" class="chat-container overflow-y-auto bg-gray-900 rounded-lg p-3 mb-3 border border-yellow-500/30">
+            <!-- Welcome Message -->
+            <div class="message-bubble mb-3">
+                <div class="flex items-start space-x-2">
+                    <div class="w-7 h-7 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="text-black text-xs font-bold">DG</span>
+                    </div>
+                    <div class="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-2 max-w-xs">
+                        <p class="text-yellow-300 text-sm">สวัสดีครับ! ยินดีต้อนรับสู่ Digital Guide 🎯</p>
+                        <p class="text-yellow-300 mt-1 text-sm">ผมพร้อมช่วยเหลือคุณในการนำทางและให้คำแนะนำต่างๆ</p>
+                        <p class="text-xs text-yellow-400/70 mt-2">เวลา: <span id="welcomeTime"></span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="bg-gray-900 rounded-lg border border-yellow-500/30 p-3 fixed bottom-0 left-0 right-0 m-2">
+            <!-- Image Preview Area -->
+            <div id="imagePreview" class="hidden mb-2 p-2 bg-gray-800 rounded-lg border border-yellow-500/20">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-yellow-400 text-xs font-medium">รูปภาพที่เลือก:</span>
+                    <button onclick="removeImage()" class="text-red-400 hover:text-red-300 text-xs">✕ ลบ</button>
+                </div>
+                <img id="previewImg" class="image-preview max-w-24 max-h-24" alt="Preview">
+            </div>
+
+            <div class="flex items-end space-x-2">
+                <!-- Image Upload Button -->
+                <label class="bg-yellow-500 hover:bg-yellow-400 text-black p-2 rounded-lg cursor-pointer transition-colors duration-200 flex-shrink-0">
+                    <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                    <span class="text-base">📷</span>
+                </label>
+
+                <!-- Text Input -->
+                <div class="flex-1">
+                    <textarea 
+                        id="messageInput" 
+                        placeholder="พิมพ์ข้อความ..."
+                        class="w-full bg-gray-800 text-yellow-300 border border-yellow-500/30 rounded-lg p-2 resize-none focus:outline-none focus:border-yellow-500 placeholder-yellow-500/50 text-sm"
+                        rows="1"
+                        onkeypress="handleKeyPress(event)"
+                    ></textarea>
+                </div>
+
+                <!-- Send Button -->
+                <button 
+                    onclick="sendMessage()" 
+                    class="bg-yellow-500 hover:bg-yellow-400 text-black px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex-shrink-0 text-sm"
+                >
+                    ส่ง
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentImage = null;
+        
+        // Initialize welcome time
+        document.getElementById('welcomeTime').textContent = new Date().toLocaleTimeString('th-TH');
+        
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentImage = e.target.result;
+                    document.getElementById('previewImg').src = e.target.result;
+                    document.getElementById('imagePreview').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        function removeImage() {
+            currentImage = null;
+            document.getElementById('imagePreview').classList.add('hidden');
+            document.getElementById('imageInput').value = '';
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+        
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            
+            if (!message && !currentImage) return;
+            
+            const chatContainer = document.getElementById('chatContainer');
+            const timestamp = new Date().toLocaleTimeString('th-TH');
+            
+            // Create user message
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'message-bubble mb-3 flex justify-end';
+            
+            let messageContent = '';
+            if (currentImage) {
+                messageContent += `<img src="${currentImage}" class="max-w-32 max-h-32 object-cover rounded-lg mb-1" alt="Uploaded image">`;
+            }
+            if (message) {
+                messageContent += `<p class="text-black text-sm">${message}</p>`;
+            }
+            
+            userMessageDiv.innerHTML = `
+                <div class="flex items-start space-x-2 flex-row-reverse">
+                    <div class="w-7 h-7 bg-black rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="text-yellow-400 text-xs font-bold">คุณ</span>
+                    </div>
+                    <div class="bg-yellow-500 rounded-lg p-2 max-w-xs">
+                        ${messageContent}
+                        <p class="text-xs text-black/70 mt-1 text-right">เวลา: ${timestamp}</p>
+                    </div>
+                </div>
+            `;
+            
+            chatContainer.appendChild(userMessageDiv);
+            
+            // Clear input
+            messageInput.value = '';
+            removeImage();
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Simulate AI response
+            setTimeout(() => {
+                hideTypingIndicator();
+                generateAIResponse(message, currentImage !== null);
+            }, 1500);
+            
+            // Scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        function showTypingIndicator() {
+            const chatContainer = document.getElementById('chatContainer');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typingIndicator';
+            typingDiv.className = 'message-bubble mb-3';
+            typingDiv.innerHTML = `
+                <div class="flex items-start space-x-2">
+                    <div class="w-7 h-7 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="text-black text-xs font-bold">DG</span>
+                    </div>
+                    <div class="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-2">
+                        <div class="typing-indicator text-yellow-300 text-sm">กำลังพิมพ์...</div>
+                    </div>
+                </div>
+            `;
+            chatContainer.appendChild(typingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+        
+        function generateAIResponse(userMessage, hasImage) {
+            const responses = [
+                "ขอบคุณสำหรับข้อความครับ! ผมเข้าใจความต้องการของคุณแล้ว 🎯",
+                "น่าสนใจมากครับ! ให้ผมช่วยวิเคราะห์และให้คำแนะนำ 🔍",
+                "ผมได้รับข้อมูลแล้วครับ กำลังประมวลผลเพื่อให้คำตอบที่ดีที่สุด ⚡",
+                "เยี่ยมครับ! ผมจะช่วยแนะนำเส้นทางที่เหมาะสมให้คุณ 🗺️",
+                "ข้อมูลที่คุณให้มาช่วยได้มากครับ ผมจะวิเคราะห์และตอบกลับ 📊"
+            ];
+            
+            let response = responses[Math.floor(Math.random() * responses.length)];
+            
+            if (hasImage) {
+                response += "\n\nผมเห็นรูปภาพที่คุณส่งมาแล้วครับ กำลังวิเคราะห์เนื้อหา... 📸";
+            }
+            
+            if (userMessage.toLowerCase().includes('ที่ไหน') || userMessage.toLowerCase().includes('ทาง')) {
+                response += "\n\nสำหรับการนำทาง ผมแนะนำให้ใช้เส้นทางที่ปลอดภัยและรวดเร็วที่สุดครับ 🛣️";
+            }
+            
+            const chatContainer = document.getElementById('chatContainer');
+            const timestamp = new Date().toLocaleTimeString('th-TH');
+            
+            const aiMessageDiv = document.createElement('div');
+            aiMessageDiv.className = 'message-bubble mb-3';
+            aiMessageDiv.innerHTML = `
+                <div class="flex items-start space-x-2">
+                    <div class="w-7 h-7 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="text-black text-xs font-bold">DG</span>
+                    </div>
+                    <div class="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-2 max-w-xs">
+                        <p class="text-yellow-300 whitespace-pre-line text-sm">${response}</p>
+                        <p class="text-xs text-yellow-400/70 mt-1">เวลา: ${timestamp}</p>
+                    </div>
+                </div>
+            `;
+            
+            chatContainer.appendChild(aiMessageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        // Auto-resize textarea
+        document.getElementById('messageInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9667575c0619731c',t:'MTc1MzczNjc5Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
